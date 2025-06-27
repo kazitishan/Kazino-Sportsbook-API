@@ -6,7 +6,9 @@ const { initBrowser, closeBrowser } = require('./scraper');
 
 app.use(cors());
 const matchesRouter = require('./routes/matches');
+const resultRouter = require('./routes/result');
 app.use('/matches', matchesRouter);
+app.use('/result', resultRouter);
 
 const server = app.listen(PORT, async () => {
     try {
