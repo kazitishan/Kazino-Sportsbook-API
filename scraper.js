@@ -36,9 +36,9 @@ async function getResult(matchLink) {
             if (!scoreMatch) return 'Score format not recognized';
             const homeScore = parseInt(scoreMatch[1]);
             const awayScore = parseInt(scoreMatch[2]);
-            if (homeScore > awayScore) return 'Home';
-            else if (homeScore < awayScore) return 'Away';
-            else return 'Draw';
+            if (homeScore > awayScore) return 'HOME';
+            else if (homeScore < awayScore) return 'AWAY';
+            else return 'DRAW';
         });
         await page.close();
         return result;
