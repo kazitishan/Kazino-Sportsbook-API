@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs').promises;
 const path = require('path');
+const errors = require('./errors');
 
 let browserInstance = null;
 let cachedAllMatches = null;
@@ -23,7 +24,7 @@ async function closeBrowser() {
 }
 
 async function getResult(matchLink) {
-    if (!browserInstance) throw new Error('Browser not initialized');
+    if (!browserInstance) throw errors.BROWSER_NOT_INITIALIZED.error;
     const page = await browserInstance.newPage();
     try {
         const fullUrl = `https://www.betexplorer.com${matchLink}`;
@@ -50,7 +51,7 @@ async function getResult(matchLink) {
 }
 
 async function getMatches(fixturesUrl) {
-    if (!browserInstance) throw new Error('Browser not initialized');
+    if (!browserInstance) throw errors.BROWSER_NOT_INITIALIZED.error;
     const page = await browserInstance.newPage();
     try {
         await page.goto(fixturesUrl);

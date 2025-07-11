@@ -1,15 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { getCachedMatches } = require('../scraper');
+const errors = require('../errors');
 
 router.get('/', async (req, res) => {
     try {
         const allMatches = getCachedMatches();
         if (!allMatches) {
-            return res.status(503).json({
-                error: 'Matches data not available yet',
-                message: 'Cache is being initialized, please try again shortly'
-            });
+            return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
         }
         res.json(allMatches);
     } catch (error) {
@@ -27,10 +25,7 @@ router.get('/:competition', async (req, res) => {
         const allMatches = getCachedMatches();
         
         if (!allMatches) {
-            return res.status(503).json({
-                error: 'Matches data not available yet',
-                message: 'Cache is being initialized, please try again shortly'
-            });
+            return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
         }
 
         const competitionData = Object.values(allMatches).find(
@@ -38,7 +33,7 @@ router.get('/:competition', async (req, res) => {
         );
 
         if (!competitionData) {
-            return res.status(404).json({ error: 'Competition not found' });
+            return res.status(errors.COMPETITION_NOT_FOUND.status).json(errors.COMPETITION_NOT_FOUND.body);
         }
 
         res.json(competitionData);
