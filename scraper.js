@@ -3,6 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 let browserInstance = null;
+let cachedAllMatches = null;
 
 async function initBrowser() {
     if (!browserInstance) {
@@ -134,9 +135,15 @@ async function getAllMatches() {
         for (const competition of competitions) {
             try {
                 const matches = await getMatches(competition.link);
-                matchesByCompetition[competition.competition] = matches;
+                matchesByCompetition[competition.competition] = {
+                    competition: competition.competition,
+                    matches: matches
+                };
             } catch (error) {
-                matchesByCompetition[competition.competition] = [];
+                matchesByCompetition[competition.competition] = {
+                    competition: competition.competition,
+                    matches: []
+                };
             }
         }
         return matchesByCompetition;
@@ -145,10 +152,37 @@ async function getAllMatches() {
     }
 }
 
+async function refreshMatchesCache() {
+    const now = new Date();
+    const timestamp = now.toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        hour12: true,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    try {
+        cachedAllMatches = await getAllMatches();
+        console.log(`[${timestamp}] Matches cache refreshed`);
+    } catch (error) {
+        console.error(`[${timestamp}] Failed to refresh matches cache:`, error);
+    }
+}
+
+function getCachedMatches() {
+    return cachedAllMatches;
+}
+
 module.exports = {
     initBrowser,
     closeBrowser,
     getResult,
     getMatches,
-    getAllMatches
+    getAllMatches,
+    refreshMatchesCache,
+    getCachedMatches
 };

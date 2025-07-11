@@ -1,11 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { getMatches, getAllMatches } = require('../scraper');
-const competitions = require('../competitions.json');
+const { getCachedMatches } = require('../scraper');
 
 router.get('/', async (req, res) => {
     try {
-        const allMatches = await getAllMatches();
+        const allMatches = getCachedMatches();
+        if (!allMatches) {
+            return res.status(503).json({
+                error: 'Matches data not available yet',
+                message: 'Cache is being initialized, please try again shortly'
+            });
+        }
         res.json(allMatches);
     } catch (error) {
         console.error('Error in matches route:', error);
@@ -19,17 +24,24 @@ router.get('/', async (req, res) => {
 router.get('/:competition', async (req, res) => {
     try {
         const competitionName = req.params.competition;
-        const competition = competitions.find(c => 
-            c.competition.toLowerCase() === competitionName.toLowerCase()
+        const allMatches = getCachedMatches();
+        
+        if (!allMatches) {
+            return res.status(503).json({
+                error: 'Matches data not available yet',
+                message: 'Cache is being initialized, please try again shortly'
+            });
+        }
+
+        const competitionData = Object.values(allMatches).find(
+            comp => comp.competition.toLowerCase() === competitionName.toLowerCase()
         );
-        if (!competition) {
+
+        if (!competitionData) {
             return res.status(404).json({ error: 'Competition not found' });
         }
-        const matches = await getMatches(competition.link);
-        res.json({
-            competition: competition.competition,
-            matches: matches
-        });
+
+        res.json(competitionData);
     } catch (error) {
         console.error(`Error fetching matches for ${req.params.competition}:`, error);
         res.status(500).json({ 
