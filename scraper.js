@@ -154,6 +154,19 @@ async function getAllMatches() {
 }
 
 async function refreshMatchesCache() {
+    try {
+        cachedAllMatches = await getAllMatches();
+        console.log(`[${getTimeStamp()}] Matches cache refreshed`);
+    } catch (error) {
+        console.error(`[${getTimeStamp()}] Failed to refresh matches cache:`, error);
+    }
+}
+
+function getCachedMatches() {
+    return cachedAllMatches;
+}
+
+function getTimeStamp(){
     const now = new Date();
     const timestamp = now.toLocaleString('en-US', {
         timeZone: 'America/New_York',
@@ -166,16 +179,7 @@ async function refreshMatchesCache() {
         second: '2-digit'
     });
 
-    try {
-        cachedAllMatches = await getAllMatches();
-        console.log(`[${timestamp}] Matches cache refreshed`);
-    } catch (error) {
-        console.error(`[${timestamp}] Failed to refresh matches cache:`, error);
-    }
-}
-
-function getCachedMatches() {
-    return cachedAllMatches;
+    return timestamp;
 }
 
 module.exports = {
