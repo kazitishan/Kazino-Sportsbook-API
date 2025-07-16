@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getResult } = require('../scraper');
+const errors = require('../errors');
 
 router.get('/', async (req, res) => {
     const link = req.query.link;

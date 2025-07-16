@@ -3,23 +3,18 @@ const fs = require('fs').promises;
 const path = require('path');
 const errors = require('./errors');
 
-let browserInstance = null;
 let cachedAllMatches = null;
 
-async function initBrowser() {
-    if (!browserInstance) {
-        browserInstance = await puppeteer.launch({ 
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-    }
-    return browserInstance;
+async function createBrowser() {
+    return await puppeteer.launch({ 
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 }
 
-async function closeBrowser() {
-    if (browserInstance) {
-        await browserInstance.close();
-        browserInstance = null;
+async function closeBrowser(browser) {
+    if (browser) {
+        await browser.close();
     }
 }
 
@@ -154,11 +149,19 @@ async function getAllMatches() {
 }
 
 async function refreshMatchesCache() {
+    let browser;
     try {
+        browser = await createBrowser();
+        browserInstance = browser;
         cachedAllMatches = await getAllMatches();
         console.log(`[${getTimeStamp()}] Matches cache refreshed`);
     } catch (error) {
         console.error(`[${getTimeStamp()}] Failed to refresh matches cache:`, error);
+    } finally {
+        if (browser) {
+            await closeBrowser(browser);
+            browserInstance = null;
+        }
     }
 }
 
@@ -183,7 +186,7 @@ function getTimeStamp(){
 }
 
 module.exports = {
-    initBrowser,
+    createBrowser,
     closeBrowser,
     getResult,
     getMatches,
