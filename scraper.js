@@ -4,6 +4,7 @@ const path = require('path');
 const errors = require('./errors');
 
 let cachedAllMatches = null;
+let browserInstance = null;
 
 async function createBrowser() {
     return await puppeteer.launch({ 
@@ -51,11 +52,16 @@ async function getMatches(fixturesUrl) {
     try {
         await page.goto(fixturesUrl);
         const matches = await page.evaluate(() => {
+            let lastValidDate = null;
+
             function parseDateTime(dateTimeText) {
+                if (!dateTimeText) return lastValidDate || 'Date not available';
+
                 const now = new Date();
                 const currentYear = now.getFullYear();
                 let matchDate;
                 let hour, minute;
+
                 if (dateTimeText.includes('Today')) {
                     matchDate = new Date(now);
                     const timeMatch = dateTimeText.match(/(\d{1,2}):(\d{2})/);
@@ -92,21 +98,31 @@ async function getMatches(fixturesUrl) {
                                         matchDate.getFullYear();
                     const formattedTime = matchDate.getHours() + ':' + 
                                         String(matchDate.getMinutes()).padStart(2, '0');
-                    return `${formattedDate} ${formattedTime} EST`;
+                    lastValidDate = `${formattedDate} ${formattedTime} EST`;
+                    return lastValidDate;
                 }
-                return dateTimeText;
+                return lastValidDate || 'Date not available';
             }
+
             const tableRows = Array.from(document.querySelectorAll('tr')).filter(row => {
                 const oddsCells = row.querySelectorAll('td.table-main__odds');
                 return oddsCells.length > 0 && 
                        Array.from(oddsCells).some(cell => cell.querySelector('button'));
             });
+
             return tableRows.map(row => {
+                const dateTimeCell = row.querySelector('td.table-main__datetime');
+                const dateTime = dateTimeCell?.textContent.trim() || null;
+                
+                if (dateTime) {
+                    lastValidDate = parseDateTime(dateTime);
+                }
+
                 const teams = row.querySelector('td.h-text-left a.in-match');
                 const oddsButtons = Array.from(row.querySelectorAll('td.table-main__odds button'));
-                const dateTime = row.querySelector('td.table-main__datetime')?.textContent.trim();
+
                 return {
-                    dateTime: parseDateTime(dateTime || 'Date not available'),
+                    dateTime: dateTime ? lastValidDate : parseDateTime(dateTime),
                     homeTeam: teams?.querySelector('span:first-child')?.textContent.trim(),
                     awayTeam: teams?.querySelector('span:last-child')?.textContent.trim(),
                     odds: oddsButtons.map(btn => btn.textContent.trim()),
@@ -181,7 +197,6 @@ function getTimeStamp(){
         minute: '2-digit',
         second: '2-digit'
     });
-
     return timestamp;
 }
 
