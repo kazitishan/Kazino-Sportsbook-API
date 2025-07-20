@@ -23,6 +23,7 @@ router.get('/:competition', async (req, res) => {
     try {
         const competitionName = req.params.competition;
         const allMatches = getCachedMatches();
+        const link = req.query.link;
         
         if (!allMatches) {
             return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
@@ -35,8 +36,18 @@ router.get('/:competition', async (req, res) => {
         if (!competitionData) {
             return res.status(errors.COMPETITION_NOT_FOUND.status).json(errors.COMPETITION_NOT_FOUND.body);
         }
+        
+        if (!link) {
+            return res.json(competitionData);
+        }
 
-        res.json(competitionData);
+        for (const match of competitionData.matches) {
+            if (match.matchLink === link) {
+                return res.json(match);
+            }
+        }
+        
+        return res.json("Match is no longer active");
     } catch (error) {
         console.error(`Error fetching matches for ${req.params.competition}:`, error);
         res.status(500).json({ 
