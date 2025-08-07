@@ -167,17 +167,17 @@ async function getAllMatches() {
 async function refreshMatchesCache() {
     let browser;
     try {
+        if (browserInstance) {
+            await closeBrowser(browserInstance);
+            browserInstance = null;
+        }
+        
         browser = await createBrowser();
         browserInstance = browser;
         cachedAllMatches = await getAllMatches();
         console.log(`[${getTimeStamp()}] Matches cache refreshed`);
     } catch (error) {
         console.error(`[${getTimeStamp()}] Failed to refresh matches cache:`, error);
-    } finally {
-        if (browser) {
-            await closeBrowser(browser);
-            browserInstance = null;
-        }
     }
 }
 
