@@ -24,8 +24,13 @@ async function getResult(matchLink) {
     const page = await browserInstance.newPage();
     try {
         const fullUrl = `https://www.betexplorer.com${matchLink}`;
-        await page.goto(fullUrl);
+        await page.goto(fullUrl, { waitUntil: 'networkidle0' });
         const result = await page.evaluate(() => {
+            const liveElement = document.querySelector('li.oddsComparison__li.oddsComparison__liveOdds_li.oddsComparison__liveOdds_activeLi');
+            if (liveElement) {
+                return 'Match is still being played';
+            }
+            
             const scoreElement = document.querySelector('p.list-details__item__score');
             if (!scoreElement) return null;
             const scoreText = scoreElement.textContent.trim();
