@@ -9,7 +9,39 @@ router.get('/', async (req, res) => {
         if (!allMatches) {
             return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
         }
-        res.json(allMatches);
+
+        const dateFilter = req.query.date;
+        
+        if (dateFilter) {
+            const filteredMatches = {};
+            
+            for (const [competitionKey, competitionData] of Object.entries(allMatches)) {
+                const filteredMatchesForCompetition = competitionData.matches.filter(match => {
+                    if (!match.dateTime || match.dateTime === 'Date not available') {
+                        return false;
+                    }
+                    
+                    const dateMatch = match.dateTime.match(/^(\d{2}-\d{2}-\d{4})/);
+                    if (!dateMatch) {
+                        return false;
+                    }
+                    
+                    const matchDate = dateMatch[1];
+                    return matchDate === dateFilter;
+                });
+                
+                if (filteredMatchesForCompetition.length > 0) {
+                    filteredMatches[competitionKey] = {
+                        competition: competitionData.competition,
+                        matches: filteredMatchesForCompetition
+                    };
+                }
+            }
+            
+            res.json(filteredMatches);
+        } else {
+            res.json(allMatches);
+        }
     } catch (error) {
         console.error('Error in matches route:', error);
         res.status(500).json({ 

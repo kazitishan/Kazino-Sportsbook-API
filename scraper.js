@@ -98,8 +98,8 @@ async function getMatches(fixturesUrl) {
                         matchDate.setDate(matchDate.getDate() - 1);
                     }
                     matchDate.setHours(hour, minute, 0, 0);
-                    const formattedDate = String(matchDate.getMonth() + 1).padStart(2, '0') + '/' +
-                                        String(matchDate.getDate()).padStart(2, '0') + '/' +
+                    const formattedDate = String(matchDate.getMonth() + 1).padStart(2, '0') + '-' +
+                                        String(matchDate.getDate()).padStart(2, '0') + '-' +
                                         matchDate.getFullYear();
                     const formattedTime = matchDate.getHours() + ':' + 
                                         String(matchDate.getMinutes()).padStart(2, '0');
