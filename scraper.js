@@ -35,13 +35,44 @@ async function getResult(matchLink) {
             if (!scoreElement) return null;
             const scoreText = scoreElement.textContent.trim();
             if (scoreText === ':') return 'Match not played yet';
+            
             const scoreMatch = scoreText.match(/(\d+):(\d+)/);
             if (!scoreMatch) return 'Score format not recognized';
-            const homeScore = parseInt(scoreMatch[1]);
-            const awayScore = parseInt(scoreMatch[2]);
-            if (homeScore > awayScore) return 'HOME';
-            else if (homeScore < awayScore) return 'AWAY';
-            else return 'DRAW';
+            
+            // Get the match date from the data-dt attribute
+            const dateElement = document.querySelector('p.list-details__item__date.headerTournamentDate.partialResultsHeight');
+            const matchDate = dateElement.getAttribute('data-dt');
+            
+            // Find the head-to-head row with matching data-dt
+            const h2hRows = document.querySelectorAll('div.head-to-head__row');
+            let targetRow = null;
+            
+            for (const row of h2hRows) {
+                if (row.getAttribute('data-dt') === matchDate) {
+                    targetRow = row;
+                    break;
+                }
+            }
+            
+            // Find the odds container
+            const oddsContainer = targetRow.querySelector('div.table-main__oddsLi.mobileGap.oddsColumn div.table-main__oddsLi.mobileGap.oddsColumn');
+            
+            // Check each of the three odds divs for the winner class
+            const oddsDivs = oddsContainer.children;
+            for (let i = 0; i < 3; i++) {
+                const oddsDiv = oddsDivs[i];
+                if (oddsDiv.classList.contains('table-main__odds') && 
+                    oddsDiv.classList.contains('table-main__odd') && 
+                    oddsDiv.classList.contains('oddMobile') && 
+                    oddsDiv.classList.contains('oddsWinnerBold')) {
+                    
+                    if (i === 0) return 'HOME';
+                    else if (i === 1) return 'DRAW';
+                    else if (i === 2) return 'AWAY';
+                }
+            }
+            
+            return 'Winner can not determined';
         });
         await page.close();
         return result;
