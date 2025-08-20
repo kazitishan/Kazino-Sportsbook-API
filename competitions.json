@@ -48,6 +48,10 @@
       "link": "https://www.betexplorer.com/football/france/ligue-1/fixtures/"
     },
     {
+      "competition": "Copa Libertadores",
+      "link": "https://www.betexplorer.com/football/south-america/copa-libertadores/fixtures/"
+    },
+    {
       "competition": "EFL Championship",
       "link": "https://www.betexplorer.com/football/england/championship/fixtures/"
     },
@@ -64,7 +68,7 @@
       "link": "https://www.betexplorer.com/football/england/fa-community-shield/fixtures/"
     },
     {
-      "competition": "Supercopa de España",
+      "competition": "Spanish Super Cup",
       "link": "https://www.betexplorer.com/football/spain/super-cup/fixtures/"
     },
     {
@@ -94,6 +98,18 @@
     {
       "competition": "French Super Cup",
       "link": "https://www.betexplorer.com/football/france/super-cup/fixtures/"
+    },
+    {
+      "competition": "Eredivisie",
+      "link": "https://www.betexplorer.com/football/netherlands/eredivisie/fixtures/"
+    },
+    {
+      "competition": "Liga Nos",
+      "link": "https://www.betexplorer.com/football/portugal/liga-portugal/fixtures/"
+    },
+    {
+      "competition": "Super Lig",
+      "link": "https://www.betexplorer.com/football/turkey/super-lig/fixtures/"
     },
     {
       "competition": "Club Friendlies",
