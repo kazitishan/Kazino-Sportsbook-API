@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { getCachedMatches } = require('../scraper');
+const { getCachedMatches, getLiveMatches } = require('../scraper');
 const errors = require('../errors');
 
 router.get('/', async (req, res) => {
     try {
+        if (req.query.live === 'true') {
+            const liveMatches = await getLiveMatches();
+            return res.json(liveMatches);
+        }
+
         const allMatches = getCachedMatches();
         if (!allMatches) {
             return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);

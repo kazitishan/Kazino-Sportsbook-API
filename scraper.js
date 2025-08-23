@@ -174,6 +174,94 @@ async function getMatches(fixturesUrl) {
     }
 }
 
+async function getLiveMatches() {
+    if (!browserInstance) throw errors.BROWSER_NOT_INITIALIZED.error;
+    const page = await browserInstance.newPage();
+    try {
+        await page.goto('https://www.betexplorer.com/', { waitUntil: 'networkidle0' });
+        
+        // Click the LIVE button using the correct selector
+        await page.click('li#fOption a#fCurrent');
+        await page.waitForSelector('ul.leagues-list', { timeout: 10000 });
+        
+        const liveMatches = await page.evaluate(() => {
+            const competitions = [];
+            const competitionElements = document.querySelectorAll('ul.leagues-list');
+
+            competitionElements.forEach(compElement => {
+                // Get competition name
+                const tournamentNavLi = compElement.querySelector('li.table-main__tournamentNavLi.js-tournament');
+                const competitionNameElement = tournamentNavLi?.querySelector('p.table-main__truncate.table-main__leaguesNames.leaguesNames');
+                const competitionFullName = competitionNameElement?.textContent.trim() || '';
+                const competitionName = competitionFullName.split(':').pop().trim();
+
+                // Get matches
+                const matches = [];
+                const matchElements = compElement.querySelectorAll('li.showHide.table-main__tournamentLiContent.tournamentLiContentMobile ul.table-main__matchInfo.table-main__live');
+
+                matchElements.forEach(matchElement => {
+                    const liElements = matchElement.querySelectorAll('li');
+                    if (liElements.length < 3) return;
+
+                    // Get match link
+                    const matchLinkElement = matchElement.querySelector('a.table-main__participants');
+                    const matchLink = matchLinkElement?.getAttribute('href') || '';
+
+                    // Get match minute
+                    const minuteElement = liElements[0].querySelector('span');
+                    const minute = minuteElement?.textContent.trim() || '';
+
+                    // Get teams
+                    const participantsElement = liElements[1];
+                    const homeTeamElement = participantsElement.querySelector('div.participantsHomeAwayMobileWidth.table-main__participantHome p');
+                    const awayTeamElement = participantsElement.querySelector('div.participantsHomeAwayMobileWidth.table-main__participantAway p');
+                    
+                    const homeTeam = homeTeamElement?.textContent.trim() || '';
+                    const awayTeam = awayTeamElement?.textContent.trim() || '';
+
+                    // Get score
+                    const scoreElement = liElements[1].querySelector('div.liveResult');
+                    const homeGoals = scoreElement?.querySelector('div.table-main__liveResults:first-child')?.textContent.trim() || '0';
+                    const awayGoals = scoreElement?.querySelector('div.table-main__liveResults:last-child')?.textContent.trim() || '0';
+                    const score = `${homeGoals}:${awayGoals}`;
+
+                    // Get odds
+                    const oddsElements = liElements[2].querySelectorAll('div.table-main__oddsLi.mobileGap.oddsColumn div.table-main__odds');
+                    const odds = Array.from(oddsElements).map(oddElement => {
+                        const oddValue = oddElement.querySelector('p.liveOdds')?.textContent.trim();
+                        return oddValue || '';
+                    });
+
+                    matches.push({
+                        minute,
+                        homeTeam,
+                        awayTeam,
+                        score,
+                        odds,
+                        matchLink,
+                        isLive: true
+                    });
+                });
+
+                if (matches.length > 0) {
+                    competitions.push({
+                        competition: competitionName,
+                        matches
+                    });
+                }
+            });
+
+            return competitions;
+        });
+
+        await page.close();
+        return liveMatches;
+    } catch (error) {
+        await page.close();
+        throw new Error(`Error fetching live matches: ${error.message}`);
+    }
+}
+
 async function getAllMatches() {
     try {
         const competitionsPath = path.join(__dirname, 'competitions.json');
@@ -241,6 +329,7 @@ module.exports = {
     closeBrowser,
     getResult,
     getMatches,
+    getLiveMatches,
     getAllMatches,
     refreshMatchesCache,
     getCachedMatches
