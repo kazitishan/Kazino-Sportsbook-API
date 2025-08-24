@@ -262,6 +262,279 @@ async function getLiveMatches() {
     }
 }
 
+async function setTimezone(timezone = -5) {
+    if (!browserInstance) throw errors.BROWSER_NOT_INITIALIZED.error;
+    
+    const page = await browserInstance.newPage();
+    try {
+        // Navigate to the homepage
+        await page.goto('https://www.betexplorer.com/', { waitUntil: 'networkidle0' });
+        
+        // Try to find the timezone dropdown by evaluating JavaScript
+        const timezoneSet = await page.evaluate(async (targetTimezone) => {
+            // Look for any element that might trigger the timezone dropdown
+            const timezoneTriggers = document.querySelectorAll('[class*="timezone"], [onclick*="timezone"]');
+            
+            for (const trigger of timezoneTriggers) {
+                try {
+                    trigger.click();
+                    // Wait a bit for the dropdown to appear
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    break;
+                } catch (e) {
+                    continue;
+                }
+            }
+            
+            // Now look for the timezone list
+            const timezoneList = document.querySelector('ul.timezone__list.visible');
+            if (!timezoneList) {
+                // If not visible, try to find any timezone list
+                const allLists = document.querySelectorAll('ul.timezone__list');
+                if (allLists.length > 0) {
+                    allLists[0].style.display = 'block';
+                    allLists[0].classList.add('visible');
+                }
+            }
+            
+            const finalList = document.querySelector('ul.timezone__list.visible');
+            if (!finalList) return false;
+            
+            const timezoneItems = finalList.querySelectorAll('li');
+            let targetItem = null;
+            
+            // Find the timezone item that matches our target
+            for (const item of timezoneItems) {
+                const button = item.querySelector('button');
+                if (button && button.getAttribute('onclick')) {
+                    const timezoneMatch = button.getAttribute('onclick').match(/set_timezone\('([+-]?\d+)'\)/);
+                    if (timezoneMatch && parseInt(timezoneMatch[1]) === targetTimezone) {
+                        targetItem = item;
+                        break;
+                    }
+                }
+            }
+            
+            // Check if it's already selected
+            if (targetItem) {
+                const button = targetItem.querySelector('button');
+                if (button && !button.classList.contains('current')) {
+                    button.click();
+                    return true;
+                }
+            }
+            
+            return false;
+        }, timezone);
+        
+        // Wait if timezone was changed
+        if (timezoneSet) {
+            await new Promise(resolve => setTimeout(resolve, 1 * 1000));
+        }
+        
+        await page.close();
+        return true;
+    } catch (error) {
+        await page.close();
+        console.error(`[${getTimeStamp()}] Error setting timezone:`, error.message);
+        return false;
+    }
+}
+
+async function getTodaysMatches() {
+    if (!browserInstance) throw errors.BROWSER_NOT_INITIALIZED.error;
+    await setTimezone(-5);
+    const page = await browserInstance.newPage();
+    try {
+        await page.goto('https://www.betexplorer.com/', { waitUntil: 'networkidle0' });
+        
+        const todaysMatches = await page.evaluate(() => {
+            const competitions = [];
+            const competitionElements = document.querySelectorAll('ul.leagues-list, ul.leagues-list.topleague');
+            
+            competitionElements.forEach(compElement => {
+                // Get competition name from first li
+                const firstLi = compElement.querySelector('li:first-child');
+                const competitionNameElement = firstLi?.querySelector('p.table-main__truncate.table-main__leaguesNames.leaguesNames');
+                let competitionName = '';
+                
+                if (competitionNameElement) {
+                    const fullName = competitionNameElement.textContent.trim();
+                    const colonIndex = fullName.indexOf(':');
+                    competitionName = colonIndex !== -1 ? fullName.substring(colonIndex + 1).trim() : fullName;
+                }
+                
+                // Get all match li elements (excluding the first one which is the competition header)
+                const matchElements = Array.from(compElement.querySelectorAll('li:not(:first-child)'));
+                const matches = [];
+                
+                matchElements.forEach(matchElement => {
+                    const matchUl = matchElement.querySelector('ul.table-main__matchInfo');
+                    if (!matchUl) return;
+                    
+                    // Check if this match has odds
+                    const oddsContainer = matchUl.querySelector('div.table-main__oddsLi.mobileGap.oddsColumn');
+                    if (!oddsContainer) return;
+                    
+                    // Check if all odds are empty
+                    const oddsElements = oddsContainer.querySelectorAll('div.table-main__odds');
+                    let hasValidOdds = false;
+                    
+                    oddsElements.forEach(oddElement => {
+                        let oddValue = '';
+                        
+                        // Check for button (not played yet)
+                        const buttonElement = oddElement.querySelector('button');
+                        if (buttonElement) {
+                            oddValue = buttonElement.textContent.trim();
+                        }
+                        
+                        // Check for p tag (finished or live)
+                        const pElement = oddElement.querySelector('p');
+                        if (pElement) {
+                            oddValue = pElement.textContent.trim();
+                        }
+                        
+                        // Check for p.liveOdds (live matches)
+                        const liveOddsElement = oddElement.querySelector('p.liveOdds');
+                        if (liveOddsElement) {
+                            oddValue = liveOddsElement.textContent.trim();
+                        }
+                        
+                        if (oddValue !== '') {
+                            hasValidOdds = true;
+                        }
+                    });
+                    
+                    // Skip matches with no valid odds
+                    if (!hasValidOdds) return;
+                    
+                    // Check match status
+                    const statusElement = matchUl.querySelector('li.table-main__matchDateStatus span');
+                    const statusClass = statusElement?.className || '';
+                    const statusText = statusElement?.textContent.trim() || '';
+                    
+                    let status, minute, dateTime, score, result = null;
+                    let isLive = false;
+                    
+                    // Determine match status
+                    if (statusClass.includes('table-main__isLive')) {
+                        status = 'Being played right now';
+                        minute = statusText;
+                        isLive = true;
+                    } else if (statusText === 'FIN') {
+                        status = 'Finished';
+                        
+                        // Determine result for finished matches
+                        const oddsDivs = oddsContainer.children;
+                        for (let i = 0; i < 3; i++) {
+                            if (oddsDivs[i].classList.contains('table-main__OddsWinner') && 
+                                oddsDivs[i].classList.contains('winner')) {
+                                if (i === 0) result = 'HOME';
+                                else if (i === 1) result = 'DRAW';
+                                else if (i === 2) result = 'AWAY';
+                                break;
+                            }
+                        }
+                    } else {
+                        status = 'Not Played Yet';
+                        // Format date with today's date and the time from statusText
+                        const today = new Date();
+                        const formattedDate = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}-${today.getFullYear()}`;
+                        dateTime = `${formattedDate} ${statusText} EST`;
+                    }
+                    
+                    // Get teams and score
+                    const participantsElement = matchUl.querySelector('li.table-main__participants');
+                    const homeTeamElement = participantsElement?.querySelector('div.table-main__participantHome p');
+                    const awayTeamElement = participantsElement?.querySelector('div.table-main__participantAway p');
+                    const homeTeam = homeTeamElement?.textContent.trim() || '';
+                    const awayTeam = awayTeamElement?.textContent.trim() || '';
+                    
+                    // Get score if available
+                    const scoreElement = participantsElement?.querySelector('div.liveResult, div.mainResult');
+                    if (scoreElement) {
+                        const scoreParts = scoreElement.querySelectorAll('div.table-main__liveResults, div.table-main__finishedResults');
+                        if (scoreParts.length >= 3) {
+                            const homeGoals = scoreParts[0].textContent.trim();
+                            const awayGoals = scoreParts[2].textContent.trim();
+                            score = `${homeGoals}:${awayGoals}`;
+                        }
+                    }
+                    
+                    // Get odds
+                    const odds = [];
+                    oddsElements.forEach(oddElement => {
+                        let oddValue = '';
+                        
+                        // Check for button (not played yet)
+                        const buttonElement = oddElement.querySelector('button');
+                        if (buttonElement) {
+                            oddValue = buttonElement.textContent.trim();
+                        }
+                        
+                        // Check for p tag (finished or live)
+                        const pElement = oddElement.querySelector('p');
+                        if (pElement) {
+                            oddValue = pElement.textContent.trim();
+                        }
+                        
+                        // Check for p.liveOdds (live matches)
+                        const liveOddsElement = oddElement.querySelector('p.liveOdds');
+                        if (liveOddsElement) {
+                            oddValue = liveOddsElement.textContent.trim();
+                        }
+                        
+                        odds.push(oddValue);
+                    });
+                    
+                    // Get match link
+                    const matchLinkElement = participantsElement?.querySelector('a');
+                    const matchLink = matchLinkElement?.getAttribute('href') || '';
+                    
+                    // Create match object based on status
+                    const matchObj = {
+                        status,
+                        homeTeam,
+                        awayTeam,
+                        odds,
+                        matchLink,
+                        isLive: status === 'Being played right now'
+                    };
+                    
+                    // Add status-specific fields
+                    if (status === 'Not Played Yet') {
+                        matchObj.dateTime = dateTime;
+                    } else if (status === 'Being played right now') {
+                        matchObj.minute = minute;
+                        matchObj.score = score;
+                    } else if (status === 'Finished') {
+                        matchObj.score = score;
+                        matchObj.result = result;
+                    }
+                    
+                    matches.push(matchObj);
+                });
+                
+                if (matches.length > 0) {
+                    competitions.push({
+                        competition: competitionName,
+                        matches
+                    });
+                }
+            });
+            
+            return competitions;
+        });
+        
+        await page.close();
+        return todaysMatches;
+    } catch (error) {
+        await page.close();
+        throw new Error(`Error fetching today's matches: ${error.message}`);
+    }
+}
+
 async function getAllMatches() {
     try {
         const competitionsPath = path.join(__dirname, 'competitions.json');
@@ -330,6 +603,7 @@ module.exports = {
     getResult,
     getMatches,
     getLiveMatches,
+    getTodaysMatches,
     getAllMatches,
     refreshMatchesCache,
     getCachedMatches

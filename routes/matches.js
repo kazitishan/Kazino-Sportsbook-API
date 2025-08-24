@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getCachedMatches, getLiveMatches } = require('../scraper');
+const { getCachedMatches, getLiveMatches, getTodaysMatches } = require('../scraper');
 const errors = require('../errors');
 
 router.get('/', async (req, res) => {
@@ -8,6 +8,11 @@ router.get('/', async (req, res) => {
         if (req.query.live === 'true') {
             const liveMatches = await getLiveMatches();
             return res.json(liveMatches);
+        }
+
+        if (req.query.today === 'true') {
+            const todaysMatches = await getTodaysMatches();
+            return res.json(todaysMatches);
         }
 
         const allMatches = getCachedMatches();
