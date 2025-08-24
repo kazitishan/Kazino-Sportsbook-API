@@ -348,6 +348,29 @@ async function getTodaysMatches() {
     try {
         await page.goto('https://www.betexplorer.com/', { waitUntil: 'networkidle0' });
         
+        // Scroll to bottom every 0.2 seconds until no new content for 2 seconds
+        await page.evaluate(async () => {
+            const delay = 0.2 * 1000; // 0.2 seconds
+            let lastHeight = document.body.scrollHeight;
+            let noChangeStartTime = null;
+            
+            while (true) {
+                // Scroll to bottom
+                window.scrollTo(0, document.body.scrollHeight);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+                // Check if page height changed
+                const newHeight = document.body.scrollHeight;
+                if (newHeight > lastHeight) {
+                    lastHeight = newHeight;
+                    noChangeStartTime = null;
+                } else {
+                    if (noChangeStartTime === null) { noChangeStartTime = Date.now(); } 
+                    else if (Date.now() - noChangeStartTime >= 2000) { break; }
+                }
+            }
+        });
+        
         const todaysMatches = await page.evaluate(() => {
             const competitions = [];
             const competitionElements = document.querySelectorAll('ul.leagues-list, ul.leagues-list.topleague');
