@@ -269,7 +269,7 @@ async function scrapeTodaysMatches(page) {
     });
     
     const todaysMatches = await page.evaluate(() => {
-        const competitions = [];
+        const competitionsByCategory = {};
         const competitionElements = document.querySelectorAll('ul.leagues-list, ul.leagues-list.topleague');
         
         competitionElements.forEach(compElement => {
@@ -437,15 +437,17 @@ async function scrapeTodaysMatches(page) {
             });
             
             if (matches.length > 0) {
-                competitions.push({
-                    category: category,
+                if (!competitionsByCategory[category]) {
+                    competitionsByCategory[category] = [];
+                }
+                competitionsByCategory[category].push({
                     competition: competitionName,
                     matches
                 });
             }
         });
         
-        return competitions;
+        return competitionsByCategory;
     });
     
     return todaysMatches;
