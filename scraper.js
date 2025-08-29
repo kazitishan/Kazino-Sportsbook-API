@@ -336,16 +336,33 @@ async function scrapeTodaysMatches(page) {
                 const statusText = statusElement?.textContent.trim() || '';
                 
                 let status, minute, dateTime, score, result = null;
-                let isLive = false;
+                let live, finished = false;
                 
                 // Determine match status
                 if (statusClass.includes('table-main__isLive')) {
                     status = 'Being played right now';
                     minute = statusText;
-                    isLive = true;
+                    live = true;
                 } else if (statusText === 'FIN') {
                     status = 'Finished';
-                    
+                    finished = true;
+                } else if (statusText === 'AET') {
+                    status = 'Finished after extra time';
+                    finished = true;
+                } else if (statusText === 'AfP') {
+                    status = 'Finished after penalties';
+                    finished = true;
+                } else if (statusText === 'AWA.') {
+                    // Skip this match - don't include in data
+                    return;
+                } else {
+                    status = 'Not Played Yet';
+                    const today = new Date();
+                    const formattedDate = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}-${today.getFullYear()}`;
+                    dateTime = `${formattedDate} ${statusText} EST`;
+                }
+
+                if (finished) {
                     // Determine result for finished matches
                     const oddsDivs = oddsContainer.children;
                     for (let i = 0; i < 3; i++) {
@@ -357,13 +374,8 @@ async function scrapeTodaysMatches(page) {
                             break;
                         }
                     }
-                } else {
-                    status = 'Not Played Yet';
-                    const today = new Date();
-                    const formattedDate = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}-${today.getFullYear()}`;
-                    dateTime = `${formattedDate} ${statusText} EST`;
                 }
-                
+
                 // Get teams and score
                 const participantsElement = matchUl.querySelector('li.table-main__participants');
                 const homeTeamElement = participantsElement?.querySelector('div.table-main__participantHome p');
@@ -419,16 +431,17 @@ async function scrapeTodaysMatches(page) {
                     awayTeam,
                     odds,
                     matchLink,
-                    isLive: status === 'Being played right now'
+                    live,
+                    finished
                 };
                 
                 // Add status-specific fields
                 if (status === 'Not Played Yet') {
                     matchObj.dateTime = dateTime;
-                } else if (status === 'Being played right now') {
+                } else if (live) { // 'Being played right now'
                     matchObj.minute = minute;
                     matchObj.score = score;
-                } else if (status === 'Finished') {
+                } else if (finished) { // 'Finished'
                     matchObj.score = score;
                     matchObj.result = result;
                 }

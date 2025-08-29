@@ -3,6 +3,65 @@ const router = express.Router();
 const { getCachedMatches, getCachedTodaysMatches } = require('../scraper');
 const errors = require('../errors');
 
+// Filters matches by finished status
+function filterFinished(matchesByCategory, finished) {
+    const filteredResult = {};
+    
+    for (const [category, competitions] of Object.entries(matchesByCategory)) {
+        const filteredCompetitions = [];
+        for (const competition of competitions) {
+            let filteredMatches;
+
+            if (finished === 'true') { filteredMatches = competition.matches.filter(match => match.finished === true); } 
+            else if (finished === 'false') { filteredMatches = competition.matches.filter(match => match.finished === false); } 
+            else { filteredMatches = competition.matches; }
+            
+            if (filteredMatches.length > 0) {
+                filteredCompetitions.push({
+                    competition: competition.competition,
+                    matches: filteredMatches
+                });
+            }
+        }
+        
+        if (filteredCompetitions.length > 0) {
+            filteredResult[category] = filteredCompetitions;
+        }
+    }
+    
+    return filteredResult;
+}
+
+// Filters matches by live status
+function filterLive(matchesByCategory, live) {
+    const filteredResult = {};
+    
+    for (const [category, competitions] of Object.entries(matchesByCategory)) {
+        const filteredCompetitions = [];
+        for (const competition of competitions) {
+            let filteredMatches;
+
+            if (live === 'true') { filteredMatches = competition.matches.filter(match => match.live === true); } 
+            else if (live === 'false') { filteredMatches = competition.matches.filter(match => match.live === false); } 
+            else { filteredMatches = competition.matches; }
+            
+            if (filteredMatches.length > 0) {
+                filteredCompetitions.push({
+                    competition: competition.competition,
+                    matches: filteredMatches
+                });
+            }
+        }
+        
+        if (filteredCompetitions.length > 0) {
+            filteredResult[category] = filteredCompetitions;
+        }
+    }
+    
+    return filteredResult;
+}
+
+
 router.get('/', async (req, res) => {
     try {
         const allMatches = getCachedMatches();
@@ -13,8 +72,16 @@ router.get('/', async (req, res) => {
         }
 
         const dateFilter = req.query.date;
+        const finished = req.query.finished;
+        const live = req.query.live;
 
         if (req.query.today === 'true') {
+            if (finished !== undefined) {
+                return res.json(filterFinished(todaysMatches, finished));
+            }
+            if (live !== undefined) {
+                return res.json(filterLive(todaysMatches, live));
+            }
             return res.json(todaysMatches);
         }
         if (!dateFilter) { return res.json(allMatches) }
