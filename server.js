@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require("cors");
 const matchesRouter = require('./routes/matches');
 const resultRouter = require('./routes/result');
-const { refreshMatchesCache } = require('./scraper');
+const { refreshMatchesCache, refreshTodaysMatchesCache, refreshCache } = require('./scraper');
 
 const app = express();
 const PORT = 8080;
@@ -14,9 +14,10 @@ app.use('/result', resultRouter);
 
 const server = app.listen(PORT, async () => {
     try {
-        await refreshMatchesCache();
-        setInterval(refreshMatchesCache, MINUTES_BETWEEN_REFRESH * 60 * 1000);
         console.log(`Server running on port ${PORT}`);
+        await refreshMatchesCache();
+        await refreshTodaysMatchesCache();
+        refreshCache();
     } catch (error) {
         console.error('Failed to initialize:', error);
         process.exit(1);
