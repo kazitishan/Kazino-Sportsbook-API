@@ -75,7 +75,7 @@ router.get('/', async (req, res) => {
         const finished = req.query.finished;
         const live = req.query.live;
 
-        if (req.query.today === 'true') {
+        if (!dateFilter) {
             if (finished !== undefined) {
                 return res.json(filterFinished(todaysMatches, finished));
             }
@@ -84,7 +84,6 @@ router.get('/', async (req, res) => {
             }
             return res.json(todaysMatches);
         }
-        if (!dateFilter) { return res.json(allMatches) }
         
         const filteredMatches = {};
         for (const [competitionKey, competitionData] of Object.entries(allMatches)) {
