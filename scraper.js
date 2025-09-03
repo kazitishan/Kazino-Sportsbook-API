@@ -484,7 +484,11 @@ async function getAllMatches() {
         const matchesByCompetition = {};
         for (const competition of competitions) {
             try {
-                const matches = await getMatches(competition.link);
+                const formattedRegion = competition.region.replace(/\s+/g, '-').toLowerCase();
+                const formattedCompetition = competition.competition.replace(/\s+/g, '-').toLowerCase();
+                const fixturesUrl = `https://www.betexplorer.com/football/${formattedRegion}/${formattedCompetition}/fixtures/`;
+
+                const matches = await getMatches(fixturesUrl);
                 matchesByCompetition[competition.competition] = {
                     competition: competition.competition,
                     matches: matches

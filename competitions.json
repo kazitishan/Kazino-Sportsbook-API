@@ -1,147 +1,118 @@
 [
     {
-      "category": "Europe",
-      "competition": "UEFA Nations League",
-      "link": "https://www.betexplorer.com/football/europe/uefa-nations-league/fixtures/"
+      "region": "Europe",
+      "competition": "UEFA Nations League"
     },
     {
-      "category": "South America",
-      "competition": "Copa America",
-      "link": "https://www.betexplorer.com/football/south-america/copa-america/fixtures/"
+      "region": "South America",
+      "competition": "Copa America"
     },
     {
-      "category": "Europe",
-      "competition": "UCL",
-      "link": "https://www.betexplorer.com/football/europe/champions-league/fixtures/"
+      "region": "Europe",
+      "competition": "Champions League"
     },
     {
-      "category": "Europe",
-      "competition": "UEL",
-      "link": "https://www.betexplorer.com/football/europe/europa-league/fixtures/"
+      "region": "Europe",
+      "competition": "Europa League"
     },
     {
-      "category": "Europe",
-      "competition": "UECL",
-      "link": "https://www.betexplorer.com/football/europe/conference-league/fixtures/"
+      "region": "Europe",
+      "competition": "Conference League"
     },
     {
-      "category": "Europe",
-      "competition": "UEFA Super Cup",
-      "link": "https://www.betexplorer.com/football/europe/uefa-super-cup/fixtures/"
+      "region": "Europe",
+      "competition": "UEFA Super Cup"
     },
     {
-      "category": "World",
-      "competition": "FIFA Club World Cup",
-      "link": "https://www.betexplorer.com/football/world/fifa-club-world-cup/fixtures/?stage=tvVoOjBU"
+      "region": "World",
+      "competition": "FIFA Club World Cup"
     },
     {
-      "category": "England",
-      "competition": "Premier League",
-      "link": "https://www.betexplorer.com/football/england/premier-league/fixtures/"
+      "region": "England",
+      "competition": "Premier League"
     },
     {
-      "category": "Spain",
-      "competition": "La Liga",
-      "link": "https://www.betexplorer.com/football/spain/laliga/fixtures/"
+      "region": "Spain",
+      "competition": "LaLiga"
     },
     {
-      "category": "Germany",
-      "competition": "Bundesliga",
-      "link": "https://www.betexplorer.com/football/germany/bundesliga/fixtures/"
+      "region": "Germany",
+      "competition": "Bundesliga"
     },
     {
-      "category": "Italy",
-      "competition": "Serie A",
-      "link": "https://www.betexplorer.com/football/italy/serie-a/fixtures/"
+      "region": "Italy",
+      "competition": "Serie A"
     },
     {
-      "category": "France",
-      "competition": "Ligue 1",
-      "link": "https://www.betexplorer.com/football/france/ligue-1/fixtures/"
+      "region": "France",
+      "competition": "Ligue 1"
     },
     {
-      "category": "South America",
-      "competition": "Copa Libertadores",
-      "link": "https://www.betexplorer.com/football/south-america/copa-libertadores/fixtures/"
+      "region": "South America",
+      "competition": "Copa Libertadores"
     },
     {
-      "category": "England",
-      "competition": "EFL Championship",
-      "link": "https://www.betexplorer.com/football/england/championship/fixtures/"
+      "region": "England",
+      "competition": "Championship"
     },
     {
-      "category": "England",
-      "competition": "FA Cup",
-      "link": "https://www.betexplorer.com/football/england/fa-cup/fixtures/"
+      "region": "England",
+      "competition": "FA Cup"
     },
     {
-      "category": "England",
-      "competition": "EFL Cup",
-      "link": "https://www.betexplorer.com/football/england/efl-cup/fixtures/"
+      "region": "England",
+      "competition": "EFL Cup"
     },
     {
-      "category": "England",
-      "competition": "Community Shield",
-      "link": "https://www.betexplorer.com/football/england/fa-community-shield/fixtures/"
+      "region": "England",
+      "competition": "FA Community Shield"
     },
     {
-      "category": "Spain",
-      "competition": "Spanish Super Cup",
-      "link": "https://www.betexplorer.com/football/spain/super-cup/fixtures/"
+      "region": "Spain",
+      "competition": "Super Cup"
     },
     {
-      "category": "Spain",
-      "competition": "Copa del Rey",
-      "link": "https://www.betexplorer.com/football/spain/copa-del-rey/fixtures/"
+      "region": "Spain",
+      "competition": "Copa del Rey"
     },
     {
-      "category": "Germany",
-      "competition": "DFB Pokal",
-      "link": "https://www.betexplorer.com/football/germany/dfb-pokal/fixtures/"
+      "region": "Germany",
+      "competition": "DFB Pokal"
     },
     {
-      "category": "Germany",
-      "competition": "German Super Cup",
-      "link": "https://www.betexplorer.com/football/germany/super-cup/fixtures/"
+      "region": "Germany",
+      "competition": "Super Cup"
     },
     {
-      "category": "Italy",
-      "competition": "Coppa Italia",
-      "link": "https://www.betexplorer.com/football/italy/coppa-italia/fixtures/"
+      "region": "Italy",
+      "competition": "Coppa Italia"
     },
     {
-      "category": "Italy",
-      "competition": "Supercoppa Italiana",
-      "link": "https://www.betexplorer.com/football/italy/super-cup/fixtures/"
+      "region": "Italy",
+      "competition": "Super Cup"
     },
     {
-      "category": "France",
-      "competition": "Coupe de France",
-      "link": "https://www.betexplorer.com/football/france/coupe-de-france/fixtures/"
+      "region": "France",
+      "competition": "Coupe de France"
     },
     {
-      "category": "France",
-      "competition": "French Super Cup",
-      "link": "https://www.betexplorer.com/football/france/super-cup/fixtures/"
+      "region": "France",
+      "competition": "Super Cup"
     },
     {
-      "category": "Netherlands",
-      "competition": "Eredivisie",
-      "link": "https://www.betexplorer.com/football/netherlands/eredivisie/fixtures/"
+      "region": "Netherlands",
+      "competition": "Eredivisie"
     },
     {
-      "category": "Portugal",
-      "competition": "Liga Nos",
-      "link": "https://www.betexplorer.com/football/portugal/liga-portugal/fixtures/"
+      "region": "Portugal",
+      "competition": "Liga Portugal"
     },
     {
-      "category": "Turkey",
-      "competition": "Super Lig",
-      "link": "https://www.betexplorer.com/football/turkey/super-lig/fixtures/"
+      "region": "Turkey",
+      "competition": "Super Lig"
     },
     {
-      "category": "World",
-      "competition": "Club Friendlies",
-      "link": "https://www.betexplorer.com/football/world/club-friendly/fixtures/"
+      "region": "World",
+      "competition": "Club Friendly"
     }
   ]
