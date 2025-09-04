@@ -262,14 +262,17 @@ async function scrapeTodaysMatches(page) {
                 lastHeight = newHeight;
                 noChangeStartTime = null;
             } else {
-                if (noChangeStartTime === null) { noChangeStartTime = Date.now(); } 
-                else if (Date.now() - noChangeStartTime >= 2000) { break; }
+                if (noChangeStartTime === null) { 
+                    noChangeStartTime = Date.now(); 
+                } else if (Date.now() - noChangeStartTime >= 2000) { 
+                    break; 
+                }
             }
         }
     });
     
     const todaysMatches = await page.evaluate(() => {
-        const competitionsByCategory = {};
+        const competitionsArray = [];
         const competitionElements = document.querySelectorAll('ul.leagues-list, ul.leagues-list.topleague');
         
         competitionElements.forEach(compElement => {
@@ -352,8 +355,7 @@ async function scrapeTodaysMatches(page) {
                 } else if (statusText === 'AfP') {
                     status = 'Finished after penalties';
                     finished = true;
-                } else if (statusText === 'AWA.') {
-                    // Skip this match - don't include in data
+                } else if (statusText === 'AWA.' || statusText === 'CAN.') { // Awarded and cancelled games
                     return;
                 } else {
                     status = 'Not Played Yet';
@@ -450,17 +452,15 @@ async function scrapeTodaysMatches(page) {
             });
             
             if (matches.length > 0) {
-                if (!competitionsByCategory[category]) {
-                    competitionsByCategory[category] = [];
-                }
-                competitionsByCategory[category].push({
+                competitionsArray.push({
+                    region: category,
                     competition: competitionName,
                     matches
                 });
             }
         });
         
-        return competitionsByCategory;
+        return competitionsArray;
     });
     
     return todaysMatches;
@@ -481,7 +481,8 @@ async function getAllMatches() {
         const competitionsPath = path.join(__dirname, 'competitions.json');
         const competitionsData = await fs.readFile(competitionsPath, 'utf8');
         const competitions = JSON.parse(competitionsData);
-        const matchesByCompetition = {};
+        const matchesByCompetition = [];
+        
         for (const competition of competitions) {
             try {
                 const formattedRegion = competition.region.replace(/\s+/g, '-').toLowerCase();
@@ -489,15 +490,17 @@ async function getAllMatches() {
                 const fixturesUrl = `https://www.betexplorer.com/football/${formattedRegion}/${formattedCompetition}/fixtures/`;
 
                 const matches = await getMatches(fixturesUrl);
-                matchesByCompetition[competition.competition] = {
+                matchesByCompetition.push({
+                    region: competition.region,
                     competition: competition.competition,
                     matches: matches
-                };
+                });
             } catch (error) {
-                matchesByCompetition[competition.competition] = {
+                matchesByCompetition.push({
+                    region: competition.region,
                     competition: competition.competition,
                     matches: []
-                };
+                });
             }
         }
         return matchesByCompetition;

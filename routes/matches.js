@@ -4,68 +4,52 @@ const { getCachedMatches, getCachedTodaysMatches } = require('../scraper');
 const errors = require('../errors');
 
 // Filters matches by finished status
-function filterFinished(matchesByCategory, finished) {
-    const filteredResult = {};
-    
-    for (const [category, competitions] of Object.entries(matchesByCategory)) {
-        const filteredCompetitions = [];
-        for (const competition of competitions) {
-            let filteredMatches;
+function filterFinished(competitionsArray, finished) {
+    return competitionsArray.map(competition => {
+        let filteredMatches;
 
-            if (finished === 'true') { filteredMatches = competition.matches.filter(match => match.finished === true); } 
-            else if (finished === 'false') { filteredMatches = competition.matches.filter(match => match.finished === false); } 
-            else { filteredMatches = competition.matches; }
-            
-            if (filteredMatches.length > 0) {
-                filteredCompetitions.push({
-                    competition: competition.competition,
-                    matches: filteredMatches
-                });
-            }
+        if (finished === 'true') {
+            filteredMatches = competition.matches.filter(match => match.finished === true);
+        } else if (finished === 'false') {
+            filteredMatches = competition.matches.filter(match => match.finished === false);
+        } else {
+            filteredMatches = competition.matches;
         }
         
-        if (filteredCompetitions.length > 0) {
-            filteredResult[category] = filteredCompetitions;
-        }
-    }
-    
-    return filteredResult;
+        return {
+            region: competition.region,
+            competition: competition.competition,
+            matches: filteredMatches
+        };
+    }).filter(competition => competition.matches.length > 0);
 }
 
 // Filters matches by live status
-function filterLive(matchesByCategory, live) {
-    const filteredResult = {};
-    
-    for (const [category, competitions] of Object.entries(matchesByCategory)) {
-        const filteredCompetitions = [];
-        for (const competition of competitions) {
-            let filteredMatches;
+function filterLive(competitionsArray, live) {
+    return competitionsArray.map(competition => {
+        let filteredMatches;
 
-            if (live === 'true') { filteredMatches = competition.matches.filter(match => match.live === true); } 
-            else if (live === 'false') { filteredMatches = competition.matches.filter(match => match.live === false); } 
-            else { filteredMatches = competition.matches; }
-            
-            if (filteredMatches.length > 0) {
-                filteredCompetitions.push({
-                    competition: competition.competition,
-                    matches: filteredMatches
-                });
-            }
+        if (live === 'true') {
+            filteredMatches = competition.matches.filter(match => match.live === true);
+        } else if (live === 'false') {
+            filteredMatches = competition.matches.filter(match => match.live === false);
+        } else {
+            filteredMatches = competition.matches;
         }
         
-        if (filteredCompetitions.length > 0) {
-            filteredResult[category] = filteredCompetitions;
-        }
-    }
-    
-    return filteredResult;
+        return {
+            region: competition.region,
+            competition: competition.competition,
+            matches: filteredMatches
+        };
+    }).filter(competition => competition.matches.length > 0);
 }
 
 
 router.get('/', async (req, res) => {
     try {
         const allMatches = getCachedMatches();
-        const todaysMatches = getCachedTodaysMatches()
+        const todaysMatches = getCachedTodaysMatches();
 
         if (!allMatches || !todaysMatches) {
             return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
@@ -85,9 +69,9 @@ router.get('/', async (req, res) => {
             return res.json(todaysMatches);
         }
         
-        const filteredMatches = {};
-        for (const [competitionKey, competitionData] of Object.entries(allMatches)) {
-            const filteredMatchesForCompetition = competitionData.matches.filter(match => {
+        // Filter matches by date
+        const filteredMatches = allMatches.filter(competition => {
+            const filteredMatchesForCompetition = competition.matches.filter(match => {
                 if (!match.dateTime || match.dateTime === 'Date not available') {
                     return false;
                 }
@@ -101,13 +85,9 @@ router.get('/', async (req, res) => {
                 return matchDate === dateFilter;
             });
             
-            if (filteredMatchesForCompetition.length > 0) {
-                filteredMatches[competitionKey] = {
-                    competition: competitionData.competition,
-                    matches: filteredMatchesForCompetition
-                };
-            }
-        }
+            competition.matches = filteredMatchesForCompetition;
+            return filteredMatchesForCompetition.length > 0;
+        });
         
         res.json(filteredMatches);
 
@@ -130,7 +110,7 @@ router.get('/:competition', async (req, res) => {
             return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
         }
 
-        const competitionData = Object.values(allMatches).find(
+        const competitionData = allMatches.find(
             comp => comp.competition.toLowerCase() === competitionName.toLowerCase()
         );
 
