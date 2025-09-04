@@ -45,7 +45,6 @@ function filterLive(competitionsArray, live) {
     }).filter(competition => competition.matches.length > 0);
 }
 
-
 router.get('/', async (req, res) => {
     try {
         const allMatches = getCachedMatches();
@@ -100,8 +99,36 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:competition', async (req, res) => {
+router.get('/:region', async (req, res) => {
     try {
+        const regionName = req.params.region;
+        const allMatches = getCachedMatches();
+        
+        if (!allMatches) {
+            return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
+        }
+
+        const regionMatches = allMatches.filter(competition => 
+            competition.region.toLowerCase() === regionName.toLowerCase()
+        );
+
+        if (regionMatches.length === 0) {
+            return res.status(errors.REGION_NOT_FOUND.status).json(errors.REGION_NOT_FOUND.body);
+        }
+        
+        res.json(regionMatches);
+    } catch (error) {
+        console.error(`Error fetching matches for region ${req.params.region}:`, error);
+        res.status(500).json({ 
+            error: 'Failed to fetch matches by region',
+            details: error.message 
+        });
+    }
+});
+
+router.get('/:region/:competition', async (req, res) => {
+    try {
+        const regionName = req.params.region;
         const competitionName = req.params.competition;
         const allMatches = getCachedMatches();
         const link = req.query.link;
@@ -110,8 +137,15 @@ router.get('/:competition', async (req, res) => {
             return res.status(errors.CACHE_NOT_READY.status).json(errors.CACHE_NOT_READY.body);
         }
 
-        const competitionData = allMatches.find(
-            comp => comp.competition.toLowerCase() === competitionName.toLowerCase()
+        const regionExists = allMatches.some(competition => 
+            competition.region.toLowerCase() === regionName.toLowerCase()
+        );
+        if (!regionExists) { return res.status(errors.REGION_NOT_FOUND.status).json(errors.REGION_NOT_FOUND.body); }
+
+        // Find the competition in the region
+        const competitionData = allMatches.find(competition => 
+            competition.region.toLowerCase() === regionName.toLowerCase() && 
+            competition.competition.toLowerCase() === competitionName.toLowerCase()
         );
 
         if (!competitionData) {
@@ -122,6 +156,7 @@ router.get('/:competition', async (req, res) => {
             return res.json(competitionData);
         }
 
+        // If link parameter is provided, find the specific match
         for (const match of competitionData.matches) {
             if (match.matchLink === link) {
                 return res.json(match);
@@ -130,7 +165,7 @@ router.get('/:competition', async (req, res) => {
         
         return res.json("Match is no longer active");
     } catch (error) {
-        console.error(`Error fetching matches for ${req.params.competition}:`, error);
+        console.error(`Error fetching matches for ${req.params.region}/${req.params.competition}:`, error);
         res.status(500).json({ 
             error: 'Failed to fetch matches',
             details: error.message 

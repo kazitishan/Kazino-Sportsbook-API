@@ -12,6 +12,12 @@ module.exports = {
             error: 'Competition not found'
         }
     },
+    REGION_NOT_FOUND: {
+        status: 404,
+        body: { 
+            error: 'Region not found.'
+        }
+    },
     BROWSER_NOT_INITIALIZED: {
         error: new Error('Browser not initialized')
     }
