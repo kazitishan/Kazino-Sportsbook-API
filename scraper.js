@@ -158,12 +158,18 @@ async function getMatches(fixturesUrl) {
                 const teams = row.querySelector('td.h-text-left a.in-match');
                 const oddsButtons = Array.from(row.querySelectorAll('td.table-main__odds button'));
 
+                const resolvedDateTime = dateTime ? lastValidDate : parseDateTime(dateTime);
                 return {
-                    dateTime: dateTime ? lastValidDate : parseDateTime(dateTime),
-                    homeTeam: teams?.querySelector('span:first-child')?.textContent.trim(),
-                    awayTeam: teams?.querySelector('span:last-child')?.textContent.trim(),
+                    status: 'Not Played Yet',
+                    homeTeam: teams?.querySelector('span:first-child')?.textContent.trim() || '',
+                    awayTeam: teams?.querySelector('span:last-child')?.textContent.trim() || '',
+                    dateTime: resolvedDateTime,
+                    finished: false,
+                    live: false,
                     odds: oddsButtons.map(btn => btn.textContent.trim()),
-                    matchLink: teams?.getAttribute('href')
+                    score: null,
+                    result: null,
+                    matchLink: teams?.getAttribute('href') || ''
                 };
             });
         });
@@ -426,29 +432,18 @@ async function scrapeTodaysMatches(page) {
                 const matchLinkElement = participantsElement?.querySelector('a');
                 const matchLink = matchLinkElement?.getAttribute('href') || '';
                 
-                // Create match object based on status
-                const matchObj = {
-                    status,
+                matches.push({
+                    status: status || 'Not Played Yet',
                     homeTeam,
                     awayTeam,
+                    dateTime: dateTime || null,
+                    finished: !!finished,
+                    live: !!live,
                     odds,
-                    matchLink,
-                    live,
-                    finished
-                };
-                
-                // Add status-specific fields
-                if (status === 'Not Played Yet') {
-                    matchObj.dateTime = dateTime;
-                } else if (live) { // 'Being played right now'
-                    matchObj.minute = minute;
-                    matchObj.score = score;
-                } else if (finished) { // 'Finished'
-                    matchObj.score = score;
-                    matchObj.result = result;
-                }
-                
-                matches.push(matchObj);
+                    score: score ?? null,
+                    result: result ?? null,
+                    matchLink
+                });
             });
             
             if (matches.length > 0) {
