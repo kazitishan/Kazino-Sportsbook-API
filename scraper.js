@@ -361,7 +361,7 @@ async function scrapeTodaysMatches(page) {
                 } else if (statusText === 'AfP') {
                     status = 'Finished after penalties';
                     finished = true;
-                } else if (statusText === 'AWA.' || statusText === 'CAN.') { // Awarded and cancelled games
+                } else if (statusText === 'AWA.' || statusText === 'CAN.' || statusText === 'POSTP.') { // Awarded, cancelled, and postponed games
                     return;
                 } else {
                     status = 'Not Played Yet';
