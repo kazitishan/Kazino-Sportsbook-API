@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
         }
         
         // Filter matches by date
-        const filteredMatches = allMatches.filter(competition => {
+        const filteredMatches = allMatches.map(competition => {
             const filteredMatchesForCompetition = competition.matches.filter(match => {
                 if (!match.dateTime || match.dateTime === 'Date not available') {
                     return false;
@@ -84,9 +84,12 @@ router.get('/', async (req, res) => {
                 return matchDate === dateFilter;
             });
             
-            competition.matches = filteredMatchesForCompetition;
-            return filteredMatchesForCompetition.length > 0;
-        });
+            return {
+                region: competition.region,
+                competition: competition.competition,
+                matches: filteredMatchesForCompetition
+            };
+        }).filter(competition => competition.matches.length > 0);
         
         res.json(filteredMatches);
 
