@@ -168,6 +168,7 @@ async function getMatches(fixturesUrl) {
                     live: false,
                     odds: oddsButtons.map(btn => btn.textContent.trim()),
                     score: null,
+                    minute: null,
                     result: null,
                     matchLink: teams?.getAttribute('href') || ''
                 };
@@ -441,6 +442,7 @@ async function scrapeTodaysMatches(page) {
                     live: !!live,
                     odds,
                     score: score ?? null,
+                    minute: minute ?? null,
                     result: result ?? null,
                     matchLink
                 });
