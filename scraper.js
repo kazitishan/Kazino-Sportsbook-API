@@ -83,12 +83,16 @@ async function getResult(matchLink) {
     }
 }
 
-async function getMatches(fixturesUrl) {
+async function getMatches(region, competition) {
     if (!browserInstance) throw errors.BROWSER_NOT_INITIALIZED.error;
     const page = await browserInstance.newPage();
     try {
+        const formattedRegion = region.replace(/\s+/g, '-').toLowerCase();
+        const formattedCompetition = competition.replace(/\s+/g, '-').toLowerCase();
+        const fixturesUrl = `https://www.betexplorer.com/football/${formattedRegion}/${formattedCompetition}/fixtures/`;
+
         await page.goto(fixturesUrl);
-        const matches = await page.evaluate(() => {
+        const matches = await page.evaluate((region, competition) => {
             let lastValidDate = null;
 
             function parseDateTime(dateTimeText) {
@@ -161,6 +165,8 @@ async function getMatches(fixturesUrl) {
                 const resolvedDateTime = dateTime ? lastValidDate : parseDateTime(dateTime);
                 return {
                     status: 'Not Played Yet',
+                    region,
+                    competition,
                     homeTeam: teams?.querySelector('span:first-child')?.textContent.trim() || '',
                     awayTeam: teams?.querySelector('span:last-child')?.textContent.trim() || '',
                     dateTime: resolvedDateTime,
@@ -173,7 +179,7 @@ async function getMatches(fixturesUrl) {
                     matchLink: teams?.getAttribute('href') || ''
                 };
             });
-        });
+        }, region, competition);
         await page.close();
         return matches;
     } catch (error) {
@@ -286,18 +292,18 @@ async function scrapeTodaysMatches(page) {
             // Get competition name
             const firstLi = compElement.querySelector('li:first-child');
             const competitionNameElement = firstLi?.querySelector('p.table-main__truncate.table-main__leaguesNames.leaguesNames');
-            let competitionName = '';
-            let category = '';
+            let competition = '';
+            let region = '';
             
             if (competitionNameElement) {
                 const fullName = competitionNameElement.textContent.trim();
                 const colonIndex = fullName.indexOf(':');
                 if (colonIndex !== -1) {
-                    category = fullName.substring(0, colonIndex).trim();
-                    competitionName = fullName.substring(colonIndex + 1).trim();
+                    region = fullName.substring(0, colonIndex).trim();
+                    competition = fullName.substring(colonIndex + 1).trim();
                 } else {
-                    category = 'General';
-                    competitionName = fullName;
+                    region = 'General';
+                    competition = fullName;
                 }
             }
             
@@ -435,6 +441,8 @@ async function scrapeTodaysMatches(page) {
                 
                 matches.push({
                     status: status || 'Not Played Yet',
+                    region,
+                    competition,
                     homeTeam,
                     awayTeam,
                     dateTime: dateTime || null,
@@ -450,8 +458,8 @@ async function scrapeTodaysMatches(page) {
             
             if (matches.length > 0) {
                 competitionsArray.push({
-                    region: category,
-                    competition: competitionName,
+                    region,
+                    competition,
                     matches
                 });
             }
@@ -482,11 +490,7 @@ async function getAllMatches() {
         
         for (const competition of competitions) {
             try {
-                const formattedRegion = competition.region.replace(/\s+/g, '-').toLowerCase();
-                const formattedCompetition = competition.competition.replace(/\s+/g, '-').toLowerCase();
-                const fixturesUrl = `https://www.betexplorer.com/football/${formattedRegion}/${formattedCompetition}/fixtures/`;
-
-                const matches = await getMatches(fixturesUrl);
+                const matches = await getMatches(competition.region, competition.competition);
                 matchesByCompetition.push({
                     region: competition.region,
                     competition: competition.competition,
@@ -544,7 +548,21 @@ async function refreshCache(){
     let count = 0;
     const SECONDS_BETWEEN_REFRESH = 20
     
-    setInterval(async () => {
+    // setInterval(async () => {
+    //     try {
+    //         await refreshTodaysMatchesCache();
+    //         count++;
+            
+    //         if (count === 100) {
+    //             count = 0;
+    //             await refreshMatchesCache();
+    //         }
+    //     } catch (error) {
+    //         console.error(`[${getTimeStamp()}] Error in refresh cycle:`, error);
+    //     }
+    // }, SECONDS_BETWEEN_REFRESH * 1000);
+
+    while (true){
         try {
             await refreshTodaysMatchesCache();
             count++;
@@ -556,7 +574,7 @@ async function refreshCache(){
         } catch (error) {
             console.error(`[${getTimeStamp()}] Error in refresh cycle:`, error);
         }
-    }, SECONDS_BETWEEN_REFRESH * 1000);
+    }
 }
 
 function getCachedMatches() {
